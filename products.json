@@ -1,0 +1,14 @@
+{
+  "title": "齒輪箱零件詢價系統",
+  "emailTo": "sales@example.com",
+  "products": [
+    {
+      "id": "p-type",
+      "name": "P型齒輪箱",
+      "model": "P-TYPE",
+      "svg": "products/p-type/drawing.svg",
+      "bom": "products/p-type/bom.csv",
+      "emailTo": ""
+    }
+  ]
+}

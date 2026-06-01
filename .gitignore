@@ -1,0 +1,5 @@
+.DS_Store
+開發過程紀錄.pages
+__pycache__/
+*.pyc
+.env
