@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>WebBOM 查看器</title>
     <style>
         /* ===== 全局重置 ===== */
@@ -227,14 +227,22 @@
                 padding-bottom: 56px; /* 給底部tab留空間 */
             }
             .svg-panel {
-                border-right: none; border-bottom: 1px solid #E6E3DA;
-                min-height: 60vh; padding: 8px;
-                display: flex; /* 默認顯示 */
+                border-right: none; border-bottom: none;
+                min-height: calc(100vh - 105px); padding: 0;
+                display: flex;
             }
-            .svg-container { min-height: 300px; }
+            .svg-container {
+                min-height: 0; flex: 1; border-radius: 0;
+                overflow: auto; touch-action: pinch-zoom pan-x pan-y;
+                -webkit-overflow-scrolling: touch;
+            }
+            .svg-container svg {
+                max-width: none; max-height: none;
+                width: 100%; height: auto;
+            }
             .bom-panel {
                 width: 100%; padding: 12px;
-                display: none; /* 默認隱藏，由 tab 切換 */
+                display: none;
             }
             .bom-panel.active { display: flex; }
             .bom-list-container { max-height: none; }
@@ -246,8 +254,8 @@
                 box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
             }
             .mobile-tabs button {
-                flex: 1; padding: 12px; border: none; background: transparent;
-                font-size: 13px; color: #87867F; cursor: pointer;
+                flex: 1; padding: 10px 4px; border: none; background: transparent;
+                font-size: 12px; color: #87867F; cursor: pointer;
                 transition: all 0.2s; position: relative;
             }
             .mobile-tabs button.active { color: #D97757; font-weight: 600; }
@@ -255,16 +263,69 @@
                 content: ''; position: absolute; bottom: 0; left: 20%; right: 20%;
                 height: 3px; background: #D97757; border-radius: 3px 3px 0 0;
             }
-            .mobile-tabs button .tab-icon { display: block; font-size: 18px; margin-bottom: 2px; }
+            .mobile-tabs button .tab-icon { display: block; font-size: 16px; margin-bottom: 1px; }
 
-            .topbar h1 { font-size: 14px; }
+            .topbar { padding: 6px 10px; }
+            .topbar h1 { font-size: 13px; }
+            .topbar .back-btn { padding: 4px 8px; font-size: 12px; }
         }
 
+        /* ===== 小手機 (<= 480px) ===== */
         @media (max-width: 480px) {
-            .svg-container { min-height: 200px; }
+            .svg-panel { min-height: calc(100vh - 100px); }
             .bom-panel { padding: 8px; }
             .bom-item { padding: 8px 10px; }
         }
+
+        /* ===== 手機橫屏 ===== */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .svg-panel {
+                min-height: calc(100vh - 50px);
+                padding: 4px;
+            }
+            .svg-container svg {
+                width: auto; height: 100%;
+                max-width: 100%;
+            }
+            .topbar { padding: 4px 8px; }
+            .topbar h1 { font-size: 12px; }
+            .mobile-tabs button { padding: 6px 4px; font-size: 11px; }
+            .mobile-tabs button .tab-icon { font-size: 14px; }
+        }
+
+        /* ===== 管理員密碼彈窗 ===== */
+        .pw-overlay {
+            position: fixed; inset: 0; z-index: 10000;
+            background: rgba(20,20,19,0.5); display: flex;
+            align-items: center; justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .pw-dialog {
+            background: white; border-radius: 12px; padding: 28px 24px;
+            width: 300px; max-width: 90vw; text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .pw-dialog h3 { font-size: 16px; color: #141413; margin-bottom: 6px; }
+        .pw-dialog p { font-size: 12px; color: #87867F; margin-bottom: 16px; }
+        .pw-dialog input {
+            width: 100%; padding: 10px 12px; border: 1px solid #E6E3DA;
+            border-radius: 8px; font-size: 14px; text-align: center; outline: none;
+            margin-bottom: 12px;
+        }
+        .pw-dialog input:focus { border-color: #D97757; }
+        .pw-dialog .pw-error { color: #D97757; font-size: 12px; margin-bottom: 8px; display: none; }
+        .pw-dialog button {
+            width: 100%; padding: 10px; border: none; border-radius: 8px;
+            background: #788C5D; color: white; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .pw-dialog button:hover { background: #657A4A; }
+        .pw-dialog .pw-cancel {
+            background: none; color: #87867F; font-weight: 400; margin-top: 8px;
+        }
+        .pw-dialog .pw-cancel:hover { background: #F0EEE6; }
+
     </style>
 </head>
 <body>
@@ -369,13 +430,26 @@
         <button onclick="switchTab('bom')">
             <span class="tab-icon">📋</span> 零件清單
         </button>
-        <button onclick="switchTab('stats')">
-            <span class="tab-icon">📊</span> 採購統計
+        <button onclick="switchTab('stats')" id="stats-tab-btn">
+            <span class="tab-icon" id="stats-tab-icon">🔒</span> 採購統計
         </button>
     </div>
 
     <!-- Toast -->
     <div class="toast" id="toast"></div>
+
+    <!-- 管理員密碼彈窗 -->
+    <div class="pw-overlay" id="pw-overlay" style="display:none;">
+        <div class="pw-dialog">
+            <h3>🔒 管理員驗證</h3>
+            <p>採購統計僅限管理員查看</p>
+            <input type="password" id="pw-input" placeholder="請輸入管理密碼" autocomplete="off">
+            <div class="pw-error" id="pw-error">密碼錯誤，請重試</div>
+            <button onclick="verifyAdmin()">確認</button>
+            <button class="pw-cancel" onclick="closePwModal()">取消</button>
+        </div>
+    </div>
+
 
     <script>
     // ========================================================================
@@ -650,10 +724,11 @@
         const container = document.querySelector('.svg-container');
         if (!svg) return;
 
+        const isMobile = window.innerWidth <= 768;
         svg.style.width = '100%';
-        svg.style.height = 'auto';
-        svg.style.maxHeight = '100%';
-        svg.style.preserveAspectRatio = 'xMidYMid meet';
+        svg.style.height = isMobile ? 'auto' : 'auto';
+        if (!isMobile) svg.style.maxHeight = '100%';
+        svg.style.preserveAspectRatio = isMobile ? 'xMinYMin meet' : 'xMidYMid meet';
 
         requestAnimationFrame(() => {
             // 統一路徑樣式
@@ -758,8 +833,45 @@
     // ========================================================================
     // 8. 手機 Tab 切換
     // ========================================================================
+    // 管理員驗證
+    const ADMIN_PASSWORD = 'webom2024';
+
+    window._isAdmin = function() { return sessionStorage.getItem('webBom_admin') === '1'; };
+
+    window.verifyAdmin = function() {
+        const input = document.getElementById('pw-input');
+        const err = document.getElementById('pw-error');
+        if (input.value === ADMIN_PASSWORD) {
+            sessionStorage.setItem('webBom_admin', '1');
+            closePwModal();
+            document.getElementById('stats-tab-icon').textContent = '📊';
+            switchTab('stats');
+        } else {
+            err.style.display = 'block';
+            input.value = '';
+            input.focus();
+        }
+    };
+
+    window.closePwModal = function() {
+        document.getElementById('pw-overlay').style.display = 'none';
+        document.getElementById('pw-error').style.display = 'none';
+        document.getElementById('pw-input').value = '';
+        // 回到上一個 tab
+        if (currentTab === 'svg') switchTab('svg');
+        else switchTab('bom');
+    };
+
     window.switchTab = function(tab) {
+        if (tab === 'stats' && !_isAdmin()) {
+            document.getElementById('pw-overlay').style.display = 'flex';
+            document.getElementById('pw-input').focus();
+            // 不切換 tab，停在目前頁面
+            return;
+        }
         currentTab = tab;
+        // 更新 icon
+        if (_isAdmin()) document.getElementById('stats-tab-icon').textContent = '📊';
         document.querySelectorAll('.mobile-tabs button').forEach(b => {
             const txt = b.textContent;
             if (tab === 'svg') b.classList.toggle('active', txt.includes('爆炸'));
@@ -769,7 +881,6 @@
         document.getElementById('svg-panel').style.display = tab === 'svg' ? 'flex' : 'none';
         document.getElementById('bom-panel').classList.toggle('active', tab === 'bom' || tab === 'stats');
         document.getElementById('stats-panel').style.display = tab === 'stats' ? 'block' : 'none';
-        // 首次切換到統計 tab 時加載數據
         if (tab === 'stats' && !window._statsLoaded) {
             loadStats();
         }
