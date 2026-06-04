@@ -1,8 +1,29 @@
 # WebBOM 待解決問題
 
-最後更新：2026-05-23
+最後更新：2026-06-04
 
 ---
+
+## 2026-06-04 已完成
+
+### 部署與數據搜集
+- [x] GitHub Pages 部署（`not-3-robot.github.io/webbom`）
+- [x] localStorage 版 analytics.js（pageview / select / inquiry / error）
+- [x] 管理儀表板 admin.html（KPI、設備分佈、錯誤追蹤、CSV 匯出）
+- [x] 手機跨平台相容（viewport-fit、safe-area、SVG filter、mailto 備用）
+- [x] QR Code 分享 + Web Share API
+- [x] Python 單元測試 13 項（data/test_generate_stats.py）
+- [x] generate_stats.py 空記錄 hotParts 修正
+
+### 手機相容修正
+- [x] SVG drop-shadow 在行動版禁用（iOS Safari 效能）
+- [x] viewport-fit=cover + safe-area-inset-bottom（iPhone notch）
+- [x] 行動版 Tab 按鈕 min-height: 44px（iOS HIG）
+- [x] Android mailto 備用方案（顯示內容 + 複製到剪貼簿）
+
+---
+
+## 2026-05-23 遺留問題
 
 ## P1 - 高優先級
 

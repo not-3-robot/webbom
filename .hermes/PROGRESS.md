@@ -127,41 +127,59 @@ SVG 要求：Inkscape 導出的 SVG，每個零件的 `<g>` 要有 `inkscape:lab
 
 ---
 
-## 2026-06-04 — 測試 / 部署 / 數據搜集基礎設施
+## 2026-06-04 — GitHub Pages 部署 + localStorage 分析 + 手機相容
 
-### Stream A: Vercel 部署
-- [x] `vercel.json` — 靜態站台設定 + API rewrite + CORS headers
-- [x] `api/log.js` — Serverless Function 日誌搜集端點
-- [ ] Vercel 部署 — 需執行 `npx vercel login` 後 `npx vercel --prod`
+### GitHub Pages 部署 (最終方案)
+- [x] 部署到 `https://not-3-robot.github.io/webbom`
+- [x] 透過 GitHub API 自動啟用 Pages（branch: main, path: /）
+- [x] 部署狀態: built ✅
+- [x] 首頁、viewer、admin 全部 200，零錯誤
 
-### Stream B: 日誌搜集 API
-- [x] API 端點：支援 pageview / select / inquiry / error 事件
-- [x] CSV 格式 + 記憶體緩衝 + 批量 flush
-- [x] CORS + preflight 處理
-- [x] 隱私友善：不記錄 IP、不追蹤個人身份
+> Vercel (`webbom.vercel.app`) 曾成功部署，但中國大陸手機 4G 網路無法存取（CDN 節點全在美國）
+> Netlify 同樣面臨中國封鎖，`netlify.app` 域名被牆
+> Gitee Pages 多次嘗試未成功（可能需實名認證或人工審核）
+> serveo.net 隧道在中國手機可存取，作為備用方案
 
-### Stream C: 前端埋點 analytics.js
-- [x] 輕量埋點模組（0 第三方依賴）
-- [x] 設備檢測：OS、瀏覽器、螢幕、DPR、語言
+### analytics.js — localStorage 版（中國適用）
+- [x] 事件存入 localStorage（上限 1000 筆），不需要後端 API
+- [x] 四種事件：pageview / select / inquiry / error
 - [x] 全域錯誤捕捉：window.onerror + unhandledrejection
-- [x] 頁面卸載自動 flush（beforeunload + visibilitychange）
-- [x] 批量發送（5 秒/50 筆）
-- [x] index.html / viewer.html 全事件追蹤
+- [x] 設備檢測：OS、瀏覽器、螢幕、DPR、語言、微信內建瀏覽器
+- [x] `exportCSV()` 匯出功能
+- [x] `getSummary()` 統計摘要（含設備/產品分佈）
+- [x] `clear()` 清除數據
+- [x] index.html / viewer.html / admin.html 全事件追蹤
 
-### Stream D: 管理儀表板 admin.html
-- [x] KPI 卡片（產品數、零件數、客戶數、採購次數）
-- [x] Tab 切換（總覽/零件分析/錯誤追蹤/原始數據）
-- [x] 月度趨勢長條圖 + 零件 TOP 10
-- [x] 密碼保護（共用 webom2024）
+### admin.html — 管理儀表板
+- [x] KPI 卡片（產品數、零件數、客戶數、採購次數、瀏覽量、詢價次數）
+- [x] 月度趨勢長條圖（來自 stats.json）
+- [x] 設備分佈圖（來自 localStorage analytics）
+- [x] 零件採購 TOP 10（來自 stats.json）
+- [x] JS 錯誤追蹤（來自 localStorage）
+- [x] CSV 匯出 + 清除數據按鈕
+- [x] 密碼保護（webom2024）
 
-### Stream E: 手機跨平台修正
-- [x] viewport-fit=cover + safe-area-inset-bottom
-- [x] 行動版 SVG 禁用 drop-shadow（iOS Safari 效能）
-- [x] 行動版 Tab 按鈕 min-height: 44px（iOS HIG）
-- [x] Android mailto 備用方案（顯示內容 + 複製到剪貼簿）
-- [x] Web Share API 整合
+### 手機跨平台相容
+- [x] viewport-fit=cover（iPhone notch 安全區域）
+- [x] safe-area-inset-bottom（底部 Tab 不遮擋）
+- [x] 行動版 SVG 禁用 drop-shadow（iOS Safari GPU 效能問題）
+- [x] 行動版 Tab 按鈕 min-height: 44px（iOS HIG 最低觸摸目標）
+- [x] Android mailto 備用方案（彈窗顯示內容 + 複製到剪貼簿）
+- [x] Web Share API 整合 + Clipboard API 降級
 
 ### 分享功能
-- [x] index.html — QR Code + 複製連結 + 原生分享
-- [x] viewer.html — 產品頁分享按鈕
+- [x] index.html — QR Code（api.qrserver.com）+ Web Share API
+- [x] viewer.html — 產品分享按鈕（Share API / Clipboard）
 - [x] 降級策略：Share API → Clipboard API → prompt()
+
+### Python 測試
+- [x] `data/test_generate_stats.py` — 13 項測試全部通過
+- [x] 測試範圍：topParts、topCustomers、monthlyStats、hotParts、空記錄、邊界值
+- [x] generate_stats.py 修正：空記錄回傳含 hotParts 欄位
+
+### 檔案變更摘要
+```
+新增: analytics.js, admin.html, data/test_generate_stats.py, .vercelignore
+修改: index.html, viewer.html, .gitignore, data/generate_stats.py
+移除: vercel.json, api/log.js, netlify/, serve.js (deprecated)
+```
