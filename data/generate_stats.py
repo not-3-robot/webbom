@@ -48,6 +48,7 @@ def compute_stats(records):
             "topParts": [],
             "topCustomers": [],
             "monthlyStats": [],
+            "hotParts": [],
             "partPurchaseHistory": {},
         }
 

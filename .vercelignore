@@ -1,0 +1,25 @@
+# 參考文件（85MB doc/dwg，不上傳）
+參考文件/
+參考圖紙/
+
+# 開發記錄
+開發過程紀錄.pages
+
+# 本地開發工具
+serve.js
+httpd.js
+serve.log
+
+# 專案管理
+.hermes/
+.claude/
+
+# Python（僅供本地使用）
+data/generate_stats.py
+data/test_generate_stats.py
+__pycache__/
+
+# 系統檔案
+.DS_Store
+.git/
+node_modules/

@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 .env
 serve.log
+.vercel
+node_modules/

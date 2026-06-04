@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>WebBOM 查看器</title>
     <style>
         /* ===== 全局重置 ===== */
@@ -80,7 +80,7 @@
             transform-box: fill-box;
             will-change: transform;
         }
-        /* 桌面 hover */
+        /* 桌面 hover — 使用 drop-shadow (桌面效能充足) */
         .svg-part:hover {
             filter: drop-shadow(0 0 10px rgba(217, 119, 87, 0.6));
             transform: scale(1.1);
@@ -108,9 +108,8 @@
             stroke-width: 3px !important;
             fill: rgba(217, 119, 87, 0.1) !important;
         }
-        /* 手機點擊高亮（臨時閃爍） */
+        /* 手機點擊高亮 — 不使用 drop-shadow (iOS Safari 效能問題) */
         .svg-part.tap-highlight {
-            filter: drop-shadow(0 0 10px rgba(217, 119, 87, 0.6));
             transform: scale(1.1);
         }
         .svg-part.tap-highlight path,
@@ -121,6 +120,13 @@
             stroke: #D97757 !important;
             stroke-width: 3px !important;
             fill: rgba(217, 119, 87, 0.1) !important;
+        }
+        /* 行動版：全局禁用 SVG drop-shadow 以提升效能 */
+        @media (max-width: 768px) {
+            .svg-part:hover,
+            .svg-part.selected {
+                filter: none;
+            }
         }
 
         /* ===== BOM 面板（桌面右側） ===== */
@@ -252,11 +258,13 @@
                 display: flex; position: fixed; bottom: 0; left: 0; right: 0;
                 background: white; border-top: 1px solid #E6E3DA; z-index: 500;
                 box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+                padding-bottom: env(safe-area-inset-bottom, 0px);
             }
             .mobile-tabs button {
                 flex: 1; padding: 10px 4px; border: none; background: transparent;
                 font-size: 12px; color: #87867F; cursor: pointer;
                 transition: all 0.2s; position: relative;
+                min-height: 44px; /* iOS HIG 最小觸摸目標 */
             }
             .mobile-tabs button.active { color: #D97757; font-weight: 600; }
             .mobile-tabs button.active::after {
@@ -327,6 +335,7 @@
         .pw-dialog .pw-cancel:hover { background: #F0EEE6; }
 
     </style>
+    <script src="analytics.js"></script>
 </head>
 <body>
 
@@ -341,6 +350,7 @@
     <div class="topbar">
         <button class="back-btn" onclick="goBack()">← 產品列表</button>
         <h1 id="product-title">載入中...</h1>
+        <button class="back-btn" onclick="shareProduct()" title="分享此產品">🔗</button>
     </div>
 
     <!-- 主容器 -->
@@ -450,6 +460,21 @@
         </div>
     </div>
 
+    <!-- Android mailto 備用方案 -->
+    <div class="pw-overlay" id="mailto-fallback" style="display:none;">
+        <div class="pw-dialog" style="width:360px;max-width:90vw;text-align:left;">
+            <h3 style="text-align:center;">發送詢價</h3>
+            <p style="text-align:center;margin:4px 0 12px;">請複製以下資訊寄送到：<br><strong id="fallback-email"></strong></p>
+            <textarea id="fallback-text" readonly
+                style="width:100%;height:140px;font-size:12px;border:1px solid #E6E3DA;border-radius:8px;padding:10px;resize:none;background:#FAF9F5;margin-bottom:12px;"></textarea>
+            <button id="fallback-copy-btn" onclick="copyFallbackText()"
+                style="width:100%;padding:10px;border:none;border-radius:8px;background:#D97757;color:white;font-size:14px;font-weight:600;cursor:pointer;">
+                複製到剪貼簿
+            </button>
+            <button class="pw-cancel" style="width:100%;margin-top:8px;" onclick="document.getElementById('mailto-fallback').style.display='none'">關閉</button>
+        </div>
+    </div>
+
 
     <script>
     // ========================================================================
@@ -552,10 +577,19 @@
             // 處理 SVG
             processSVGAfterLoad();
 
+            // Analytics: 頁面載入成功
+            if (window.WebBOMAnalytics) {
+                window.WebBOMAnalytics.pageview(productId);
+            }
+
         } catch (err) {
             document.getElementById('loading-error').textContent = '錯誤：' + err.message;
             document.getElementById('loading-error').style.display = 'block';
             document.getElementById('loading-text').textContent = '載入失敗';
+            // Analytics: 載入失敗
+            if (window.WebBOMAnalytics) {
+                window.WebBOMAnalytics.error('Product load failed: ' + err.message, err.stack, '', 0, 0);
+            }
         }
     }
 
@@ -618,12 +652,21 @@
             selectedParts.delete(partId);
             updateBOMSelection(partId, false);
             updateSVGSelection(partId, false);
+            // Analytics
+            if (window.WebBOMAnalytics) {
+                const p = bomData.find(item => item.id === partId);
+                window.WebBOMAnalytics.select('remove', p || { id: partId });
+            }
         } else {
             const part = bomData.find(p => p.id === partId);
             if (part) {
                 selectedParts.set(partId, { part, customQty: part.quantity });
                 updateBOMSelection(partId, true);
                 updateSVGSelection(partId, true);
+                // Analytics
+                if (window.WebBOMAnalytics) {
+                    window.WebBOMAnalytics.select('add', part);
+                }
             }
         }
         updateStats();
@@ -701,7 +744,61 @@
 
         if (confirm('即將打開郵件客戶端，發送 ' + selectedParts.size + ' 種零件（共 ' + total + ' 件）的詢價請求？')) {
             const emailTo = document.getElementById('email-input').value.trim();
-            window.location.href = 'mailto:' + encodeURIComponent(emailTo) + '?subject=' + subject + '&body=' + body;
+            // Analytics
+            if (window.WebBOMAnalytics) {
+                window.WebBOMAnalytics.inquiry({
+                    totalParts: selectedParts.size,
+                    totalQty: total,
+                    emailDomain: emailTo.split('@')[1] || emailTo,
+                    partNumbers: Array.from(selectedParts.keys())
+                });
+            }
+            // mailto: 連結
+            var mailtoUrl = 'mailto:' + encodeURIComponent(emailTo) + '?subject=' + subject + '&body=' + body;
+
+            // Android Chrome 偵測：若無郵件客戶端，mailto 可能無效
+            var isAndroid = /Android/.test(navigator.userAgent);
+            if (isAndroid) {
+                // 嘗試 mailto，同時顯示備用方案
+                showMailtoFallback(emailTo, lines.join('\n'), mailtoUrl);
+            } else {
+                window.location.href = mailtoUrl;
+            }
+        }
+    };
+
+    // Android mailto 備用方案
+    window._fallbackMailtoUrl = '';
+
+    window.showMailtoFallback = function(email, text, mailtoUrl) {
+        document.getElementById('fallback-email').textContent = email;
+        document.getElementById('fallback-text').value = text;
+        document.getElementById('mailto-fallback').style.display = 'flex';
+        window._fallbackMailtoUrl = mailtoUrl;
+        // 仍然嘗試打開 mailto
+        setTimeout(function() {
+            window.location.href = mailtoUrl;
+        }, 100);
+    };
+
+    window.copyFallbackText = function() {
+        var text = document.getElementById('fallback-text').value;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function() {
+                var btn = document.getElementById('fallback-copy-btn');
+                btn.textContent = '已複製！';
+                btn.style.background = '#788C5D';
+                setTimeout(function() {
+                    btn.textContent = '複製到剪貼簿';
+                    btn.style.background = '#D97757';
+                }, 2000);
+            });
+        } else {
+            // 降級方案：選中文字手動複製
+            var ta = document.getElementById('fallback-text');
+            ta.select();
+            ta.setSelectionRange(0, 99999);
+            showToast('請手動複製詢價內容');
         }
     };
 
@@ -891,6 +988,24 @@
     // ========================================================================
     window.goBack = function() {
         window.location.href = './index.html';
+    };
+
+    window.shareProduct = function() {
+        var url = window.location.href;
+        var title = (productConfig ? productConfig.name : 'WebBOM') + ' - 零件詢價';
+        if (navigator.share) {
+            navigator.share({
+                title: title,
+                text: '查看 ' + (productConfig ? productConfig.name : '產品') + ' 的爆炸圖與 BOM 零件清單',
+                url: url
+            }).catch(function() {});
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function() {
+                showToast('產品連結已複製到剪貼簿');
+            });
+        } else {
+            prompt('請複製以下網址分享此產品：', url);
+        }
     };
 
     // ========================================================================

@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>WebBOM 產品列表</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -77,11 +77,24 @@
             .card-preview { height: 140px; }
         }
     </style>
+    <script src="analytics.js"></script>
 </head>
 <body>
     <div class="header">
         <h1>🔧 齒輪箱零件詢價系統</h1>
         <p>選擇產品查看爆炸圖與 BOM 清單</p>
+        <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;">
+            <button id="share-btn" onclick="sharePage()" style="padding:8px 16px;border:1px solid #E6E3DA;border-radius:8px;background:white;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;transition:background 0.2s;">
+                <span>🔗</span> 分享此頁面
+            </button>
+            <button id="qr-btn" onclick="toggleQR()" style="padding:8px 16px;border:1px solid #E6E3DA;border-radius:8px;background:white;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;transition:background 0.2s;">
+                <span>📱</span> 顯示 QR Code
+            </button>
+        </div>
+        <div id="qr-container" style="display:none;margin-top:12px;text-align:center;">
+            <canvas id="qr-canvas" style="border:8px solid white;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.1);"></canvas>
+            <p style="font-size:11px;color:#87867F;margin-top:6px;">掃描 QR Code 在手機上打開</p>
+        </div>
     </div>
 
     <div class="grid" id="product-grid">
@@ -127,13 +140,95 @@
                 grid.appendChild(card);
             });
 
+            // Analytics: 產品列表載入成功
+            if (window.WebBOMAnalytics) {
+                window.WebBOMAnalytics.pageview('index');
+            }
+
         } catch (err) {
             document.getElementById('product-grid').innerHTML =
                 '<div class="empty-state"><h2>無法載入產品清單</h2><p>' + err.message + '</p></div>';
+            if (window.WebBOMAnalytics) {
+                window.WebBOMAnalytics.error('Product list load failed: ' + err.message, err.stack, '', 0, 0);
+            }
         }
     }
 
     loadProducts();
+
+    // ============================================================
+    // QR Code & 分享功能
+    // ============================================================
+    var qrShown = false;
+
+    window.toggleQR = function() {
+        var container = document.getElementById('qr-container');
+        qrShown = !qrShown;
+        container.style.display = qrShown ? 'block' : 'none';
+        if (qrShown) { generateQR(); }
+    };
+
+    window.generateQR = function() {
+        var canvas = document.getElementById('qr-canvas');
+        if (canvas.dataset.generated) return;
+        canvas.dataset.generated = '1';
+
+        var url = window.location.href;
+        var size = 200;
+
+        // 使用 QR Server API (免費、無需 API Key)
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+            canvas.width = size;
+            canvas.height = size;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, size, size);
+        };
+        img.onerror = function() {
+            // fallback: 顯示 URL 文字
+            canvas.width = size;
+            canvas.height = size;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FAF9F5';
+            ctx.fillRect(0, 0, size, size);
+            ctx.fillStyle = '#87867F';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('QR Code 載入失敗', size/2, size/2 - 10);
+            ctx.fillText('請複製網址', size/2, size/2 + 10);
+        };
+        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(url) + '&margin=10';
+    };
+
+    window.sharePage = function() {
+        var url = window.location.href;
+        // 優先使用 Web Share API (行動裝置原生分享)
+        if (navigator.share) {
+            navigator.share({
+                title: 'WebBOM 齒輪箱零件詢價系統',
+                text: '查看齒輪箱爆炸圖與 BOM 零件清單',
+                url: url
+            }).catch(function() {});
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+            // 桌面端：複製到剪貼簿
+            navigator.clipboard.writeText(url).then(function() {
+                var btn = document.getElementById('share-btn');
+                var origHTML = btn.innerHTML;
+                btn.innerHTML = '<span>✅</span> 已複製！';
+                btn.style.background = '#788C5D';
+                btn.style.color = 'white';
+                setTimeout(function() {
+                    btn.innerHTML = origHTML;
+                    btn.style.background = 'white';
+                    btn.style.color = '#141413';
+                }, 2000);
+            });
+        } else {
+            // 降級：選中並提示手動複製
+            prompt('請複製以下網址：', url);
+        }
+    };
     </script>
 </body>
 </html>

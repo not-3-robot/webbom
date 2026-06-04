@@ -1,6 +1,6 @@
 # WebBOM 開發進度
 
-最後更新：2026-05-23
+最後更新：2026-06-04
 
 ---
 
@@ -124,3 +124,44 @@ SVG 要求：Inkscape 導出的 SVG，每個零件的 `<g>` 要有 `inkscape:lab
 - 運行只需要：`python3 -m http.server 8000 --bind 0.0.0.0`
 - 數據格式：JSON（products.json）+ CSV（BOM 數據）
 - SVG：Inkscape 導出格式，inkscape:label 屬性做零件標記
+
+---
+
+## 2026-06-04 — 測試 / 部署 / 數據搜集基礎設施
+
+### Stream A: Vercel 部署
+- [x] `vercel.json` — 靜態站台設定 + API rewrite + CORS headers
+- [x] `api/log.js` — Serverless Function 日誌搜集端點
+- [ ] Vercel 部署 — 需執行 `npx vercel login` 後 `npx vercel --prod`
+
+### Stream B: 日誌搜集 API
+- [x] API 端點：支援 pageview / select / inquiry / error 事件
+- [x] CSV 格式 + 記憶體緩衝 + 批量 flush
+- [x] CORS + preflight 處理
+- [x] 隱私友善：不記錄 IP、不追蹤個人身份
+
+### Stream C: 前端埋點 analytics.js
+- [x] 輕量埋點模組（0 第三方依賴）
+- [x] 設備檢測：OS、瀏覽器、螢幕、DPR、語言
+- [x] 全域錯誤捕捉：window.onerror + unhandledrejection
+- [x] 頁面卸載自動 flush（beforeunload + visibilitychange）
+- [x] 批量發送（5 秒/50 筆）
+- [x] index.html / viewer.html 全事件追蹤
+
+### Stream D: 管理儀表板 admin.html
+- [x] KPI 卡片（產品數、零件數、客戶數、採購次數）
+- [x] Tab 切換（總覽/零件分析/錯誤追蹤/原始數據）
+- [x] 月度趨勢長條圖 + 零件 TOP 10
+- [x] 密碼保護（共用 webom2024）
+
+### Stream E: 手機跨平台修正
+- [x] viewport-fit=cover + safe-area-inset-bottom
+- [x] 行動版 SVG 禁用 drop-shadow（iOS Safari 效能）
+- [x] 行動版 Tab 按鈕 min-height: 44px（iOS HIG）
+- [x] Android mailto 備用方案（顯示內容 + 複製到剪貼簿）
+- [x] Web Share API 整合
+
+### 分享功能
+- [x] index.html — QR Code + 複製連結 + 原生分享
+- [x] viewer.html — 產品頁分享按鈕
+- [x] 降級策略：Share API → Clipboard API → prompt()
