@@ -25,7 +25,7 @@ https://not-3-robot.github.io/webbom
 ## 更新流程
 
 ```bash
-cd /Users/zone/claudecode/WebBOM
+cd /Users/zone/Documents/Project/webBOM
 git add -A
 git commit -m "描述修改內容"
 git push

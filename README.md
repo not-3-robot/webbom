@@ -61,12 +61,4 @@ P01,1,400198,C型扣環<R-47>,1
 3. 前端會自動讀取顯示
 
 ## 部署（永久網址）
-
-專案為純靜態檔案，可直接部署到 Vercel / Netlify / GitHub Pages：
-
-```bash
-# Vercel
-npx vercel --prod
-
-# 或直接拖曳整個目錄到 Netlify Drop
 ```
