@@ -109,7 +109,7 @@
 </div>
 
 <div class="header">
-    <h1>📊 WebBOM 管理儀表板</h1>
+    <h1>📊 WebBOM 管理儀表板<span id="datasource-badge" style="font-size:11px;font-weight:400;color:#87867F;margin-left:8px;"></span></h1>
     <div class="nav">
         <a href="index.html">← 返回產品列表</a>
         <button class="refresh-btn" onclick="refreshData()">🔄 刷新</button>
@@ -168,6 +168,8 @@
     </div>
 </div>
 
+<!-- Cloudflare Worker URL：部署後替換為你的 Worker 網址 -->
+<script>var WEBOM_WORKER_URL = '';</script>
 <script src="sanitize.js"></script>
 <script src="analytics.js"></script>
 <script>
@@ -230,19 +232,16 @@ let currentTab = 'overview';
 
 async function loadDashboard() {
     try {
-        // 載入 stats.json
         var statsRes = await fetch('./data/stats.json');
         var stats = statsRes.ok ? await statsRes.json() : {};
-
-        // 載入產品清單
         var productRes = await fetch('./products.json');
         var products = productRes.ok ? (await productRes.json()).products || [] : [];
 
-        // 載入 localStorage 分析數據
-        var analyticsSummary = window.WebBOMAnalytics ? window.WebBOMAnalytics.getSummary() : null;
-
-        renderKPIs(stats, products, analyticsSummary);
-        renderStats(stats, analyticsSummary);
+        // 非同步取得分析數據（優先 Worker，降級 localStorage）
+        window.WebBOMAnalytics.getSummary(function(analyticsSummary) {
+            renderKPIs(stats, products, analyticsSummary);
+            renderStats(stats, analyticsSummary);
+        });
 
         if (window.WebBOMAnalytics) {
             window.WebBOMAnalytics.pageview('admin');
@@ -266,6 +265,15 @@ function renderKPIs(stats, products, analytics) {
 
     var pv = analytics ? analytics.pageviews : 0;
     var inqs = analytics ? analytics.inquiries : 0;
+
+    // 資料來源標記
+    var badge = document.getElementById('datasource-badge');
+    if (badge) {
+        var hasRemote = analytics && analytics.total !== undefined && analytics.total > 0;
+        var hasWorker = (typeof WEBOM_WORKER_URL !== 'undefined' && WEBOM_WORKER_URL !== '');
+        if (hasWorker) badge.textContent = '☁️ Cloudflare Worker';
+        else badge.textContent = '(📱 本機 localStorage)';
+    }
 
     document.getElementById('kpi-grid').innerHTML = [
         { num: productCount, label: '產品數' },
