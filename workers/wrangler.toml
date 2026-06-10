@@ -4,4 +4,4 @@ compatibility_date = "2024-01-01"
 
 [[kv_namespaces]]
 binding = "ANALYTICS"
-id = "YOUR_KV_NAMESPACE_ID"   # 部署前替換：npx wrangler kv:namespace create ANALYTICS
+id = "db15922249ed4ef2a0966ded2fad058b"
