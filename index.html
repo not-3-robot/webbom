@@ -77,6 +77,7 @@
             .card-preview { height: 140px; }
         }
     </style>
+    <script src="sanitize.js"></script>
     <script src="analytics.js"></script>
 </head>
 <body>
@@ -125,13 +126,14 @@
                 card.className = 'product-card';
                 // 提取型號縮寫做為預覽文字
                 const modelHint = (product.model || product.id).substring(0, 6).toUpperCase();
+                const esc = window.WebBOMSanitize ? window.WebBOMSanitize.escapeHtml : function(s) { return String(s||''); };
                 card.innerHTML = `
                     <div class="card-preview" style="font-size:48px;color:#D97757;background:#F0EEE6;">
-                        ⚙ ${modelHint}
+                        ⚙ ${esc(modelHint)}
                     </div>
                     <div class="card-body">
-                        <h3>${product.name}</h3>
-                        <div class="model">型號: ${product.model || product.id}</div>
+                        <h3>${esc(product.name)}</h3>
+                        <div class="model">型號: ${esc(product.model || product.id)}</div>
                     </div>
                 `;
                 card.addEventListener('click', () => {

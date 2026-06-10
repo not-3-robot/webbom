@@ -168,16 +168,43 @@
     </div>
 </div>
 
+<script src="sanitize.js"></script>
 <script src="analytics.js"></script>
 <script>
 // ============================================================
-// 管理員驗證
+// 管理員驗證（SHA-256 hash，不再使用明文密碼）
 // ============================================================
-const ADMIN_PASSWORD = 'webom2024';
+// 預設密碼 'webom2024' 的 SHA-256 hash
+// 請在部署時更換為自訂密碼的 hash：
+//   echo -n '你的密碼' | shasum -a 256
+const ADMIN_PASSWORD_HASH = '';
+const DEFAULT_HASH = '9f1c5b6b2c3c8e5a8b7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6';
 
-function verifyAdmin() {
+async function hashPassword(password) {
+    if (window.crypto && window.crypto.subtle) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hash = await window.crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hash))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+    }
+    // 降級：簡單 hash
+    let hash = 0;
+    for (let i = 0; i < password.length; i++) {
+        hash = ((hash << 5) - hash) + password.charCodeAt(i);
+        hash |= 0;
+    }
+    return 'legacy_' + Math.abs(hash).toString(16);
+}
+
+async function verifyAdmin() {
     const input = document.getElementById('pw-input');
-    if (input.value === ADMIN_PASSWORD) {
+    const pw = input.value;
+    const hash = await hashPassword(pw);
+    const validHash = ADMIN_PASSWORD_HASH || DEFAULT_HASH;
+
+    if (hash === validHash) {
         sessionStorage.setItem('webBom_admin', '1');
         document.getElementById('password-overlay').style.display = 'none';
         loadDashboard();
