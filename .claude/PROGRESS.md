@@ -220,3 +220,17 @@ SVG 要求：Inkscape 導出的 SVG，每個零件的 `<g>` 要有 `inkscape:lab
 新增: deploy.sh, workers/analytics-worker.js, workers/wrangler.toml
 修改: analytics.js (重構), admin.html (Worker 整合 + 密碼修正), viewer.html, viewer.css, viewer.js (暗色模式移除), index.html (Worker URL)
 ```
+
+### Cloudflare Workers KV 容量與限制
+
+| 項目 | 限制 | 說明 |
+|------|------|------|
+| 事件保留天數 | 90 天 | `expirationTtl: 7776000` 秒，滿期自動刪除 |
+| 最多事件數 | 1,000 筆 | 免費方案每命名空間 1,000 key |
+| 儲存容量 | 1 GB | 1,000 筆約 500KB，遠低於上限 |
+| 每日寫入次數 | 1,000 次 | 免費額度 |
+| 每日讀取次數 | 100,000 次 | 免費額度 |
+
+### 產品爆炸圖/BOM 與儲存關係
+
+產品爆炸圖（SVG）和 BOM（CSV）存放於 **GitHub Pages**（1GB 免費），與 Cloudflare KV 分析儲存**完全獨立**。增加產品數量不影響 KV 的 1,000 筆事件上限。一個 SVG 約 50KB～2MB，500 個產品才逼近 1GB。分析事件僅記錄 pageview、詢價等輕量資訊，每筆約 500 字元。

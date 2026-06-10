@@ -101,3 +101,14 @@ Cloudflare (分析後端)
 ### 本地備援（localStorage）
 - `webbom_analytics` key，上限 1000 筆
 - Worker 不可用時自動降級至 localStorage
+
+### KV 容量與限制
+| 項目 | 限制 |
+|------|------|
+| 事件保留天數 | 90 天（可調整 `expirationTtl`） |
+| 最多事件數 | 1,000 筆 |
+| 儲存容量 | 1 GB（實際用量遠低） |
+| 每日寫入 | 1,000 次 |
+| 每日讀取 | 100,000 次 |
+
+產品 SVG/BOM 存於 GitHub Pages（1GB），不佔用 KV 容量。
