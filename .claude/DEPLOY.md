@@ -1,6 +1,6 @@
 # WebBOM 部署文件
 
-最後更新：2026-06-04
+最後更新：2026-06-10
 
 ---
 
@@ -24,6 +24,14 @@ https://not-3-robot.github.io/webbom
 
 ## 更新流程
 
+### 一鍵部署（推薦）
+```bash
+cd /Users/zone/Documents/Project/webBOM
+bash deploy.sh
+```
+自動完成：git push → 等待 GitHub Pages 部署 → 生成 QR 碼 → 自動打開。
+
+### 手動部署
 ```bash
 cd /Users/zone/Documents/Project/webBOM
 git add -A
@@ -59,10 +67,14 @@ ssh -R 80:localhost:9001 serveo.net
 GitHub Pages (靜態託管)
 ├── index.html           # 產品列表（QR Code、分享）
 ├── viewer.html          # SVG 爆炸圖 + BOM + 詢價
-├── admin.html           # 管理儀表板
-├── analytics.js         # localStorage 分析模組
+├── admin.html           # 管理儀表板（☁️ Cloudflare Worker）
+├── analytics.js         # 雙通道分析（Worker + localStorage 備援）
+├── deploy.sh            # 一鍵部署腳本
 ├── products.json        # 產品設定
 ├── products/p-type/     # P型齒輪箱 SVG + CSV
+├── workers/
+│   ├── analytics-worker.js  # Cloudflare Worker
+│   └── wrangler.toml        # Worker 部署設定
 └── data/
     ├── stats.json       # 採購統計（generate_stats.py 產生）
     ├── purchases/       # 採購記錄 CSV
@@ -70,10 +82,22 @@ GitHub Pages (靜態託管)
     └── test_generate_stats.py  # 單元測試 (13 tests)
 ```
 
+```
+Cloudflare (分析後端)
+└── webbom-analytics.workers.dev
+    ├── POST /event  → KV 儲存
+    └── GET /stats   → 彙總回傳
+```
+
 ## 數據搜集
 
-所有分析數據存在瀏覽器 **localStorage**（不經後端）：
+### 雲端分析（Cloudflare Worker）
+- Worker URL：`https://webbom-analytics.notnotnotrobot.workers.dev`
+- 事件：POST `/event`，90 天自動過期
+- 彙總：GET `/stats`
+- KV Namespace：`ANALYTICS`（db15922249ed4ef2a0966ded2fad058b）
+- **所有裝置共享同一份數據，換裝置不消失**
 
+### 本地備援（localStorage）
 - `webbom_analytics` key，上限 1000 筆
-- 管理員可在 admin.html 匯出 CSV 或清除數據
-- 每台設備獨立儲存，不跨設備同步
+- Worker 不可用時自動降級至 localStorage

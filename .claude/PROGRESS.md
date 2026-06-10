@@ -1,6 +1,6 @@
 # WebBOM 開發進度
 
-最後更新：2026-06-04
+最後更新：2026-06-10
 
 ---
 
@@ -182,4 +182,41 @@ SVG 要求：Inkscape 導出的 SVG，每個零件的 `<g>` 要有 `inkscape:lab
 新增: analytics.js, admin.html, data/test_generate_stats.py, .vercelignore
 修改: index.html, viewer.html, .gitignore, data/generate_stats.py
 移除: vercel.json, api/log.js, netlify/, serve.js (deprecated)
+```
+
+---
+
+## 2026-06-10 — 暗色模式移除 + 分析後端雲端化 + 一鍵部署腳本
+
+### 暗色模式移除
+- [x] 移除 viewer.html 中的 🌓 切換按鈕
+- [x] 刪除 viewer.css 中 `@media (prefers-color-scheme: dark)` 及所有 `.dark-mode-enabled` 樣式（107 行）
+- [x] 移除 viewer.js 中 `initDarkMode()`、`toggleDarkMode()`、鍵盤快捷鍵 `Ctrl+Shift+D`
+- [x] 原因：暗色模式時爆炸圖 SVG 看不見（深色零件在深色背景上消失）
+
+### 管理後台修正
+- [x] 修正 admin.html 密碼驗證 — `DEFAULT_HASH` 原為假佔位值，更換為 `webom2024` 的正確 SHA-256 hash
+- [x] 後台現可正常登入，密碼：`webom2024`
+
+### analytics.js → Cloudflare Worker 雲端化
+- [x] 原 `analytics.js` 僅存 localStorage（換裝置數據消失）→ 重構為雙通道：Cloudflare Worker（主）+ localStorage（備援）
+- [x] 建立 Cloudflare Worker：`workers/analytics-worker.js`
+  - `POST /event` — 接收事件並存入 KV
+  - `GET /stats` — 彙總統計（pageviews、inquiries、errors、devices、products、topParts、recentErrors）
+  - KV 自動過期：90 天
+- [x] 建立 KV Namespace：`ANALYTICS`（id: `db15922249ed4ef2a0966ded2fad058b`）
+- [x] 部署至 `https://webbom-analytics.notnotnotrobot.workers.dev`
+- [x] admin.html 標頭顯示 `☁️ Cloudflare Worker`，標記當前使用雲端數據源
+- [x] index.html、viewer.html、admin.html 均配置 `WEBOM_WORKER_URL`，事件自動上傳雲端
+- [x] `getSummary(callback)` 非同步 API：優先讀取 Worker，降級合併 localStorage
+
+### 一鍵部署腳本 deploy.sh
+- [x] `bash deploy.sh`：自動 git push → 等待 GitHub Pages 部署 → 生成 QR 碼 PNG → 自動打開
+- [x] QR 碼輸出至 `~/Downloads/webBOM-qrcode.png`，URL：`https://not-3-robot.github.io/webbom/`
+- [x] 不需再手動處理 localtunnel、IP、port
+
+### 檔案變更摘要
+```
+新增: deploy.sh, workers/analytics-worker.js, workers/wrangler.toml
+修改: analytics.js (重構), admin.html (Worker 整合 + 密碼修正), viewer.html, viewer.css, viewer.js (暗色模式移除), index.html (Worker URL)
 ```

@@ -1,6 +1,28 @@
 # WebBOM 待解決問題
 
-最後更新：2026-06-04
+最後更新：2026-06-10
+
+---
+
+## 2026-06-10 已完成
+
+### 暗色模式移除
+- [x] 刪除 viewer.html 切換按鈕、viewer.css 暗色樣式（107 行）、viewer.js 相關功能
+- [x] 原因：暗色背景導致爆炸圖 SVG 零件不可見
+
+### 管理後台修正
+- [x] admin.html 密碼 hash 修正（原 DEFAULT_HASH 為假值，無法登入）
+- [x] 密碼：`webom2024`
+
+### 分析系統雲端化
+- [x] analytics.js 重構 → 雙通道：Cloudflare Worker (主) + localStorage (備援)
+- [x] Cloudflare Worker 部署於 `webbom-analytics.notnotnotrobot.workers.dev`
+- [x] KV 儲存事件，90 天自動過期
+- [x] 後台標頭顯示 `☁️ Cloudflare Worker`（集中式數據）
+- [x] 所有頁面（index/viewer/admin）自動上傳事件至 Worker
+
+### 一鍵部署
+- [x] `bash deploy.sh`：git push → 等部署 → 生成 QR → 自動打開
 
 ---
 
