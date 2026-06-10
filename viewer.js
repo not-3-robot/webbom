@@ -42,7 +42,7 @@
 
   // 預設密碼 'webom2024' 的 SHA-256 hash
   // 可在部署時更換為自訂密碼的 hash
-  var DEFAULT_HASH = '9f1c5b6b2c3c8e5a8b7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6';
+  var DEFAULT_HASH = '6d23d6842954d957582968838f89ae5302f8628f6dc861b3187d18d92d997b87';
 
   window._isAdmin = function() {
     return sessionStorage.getItem('webBom_admin') === '1';

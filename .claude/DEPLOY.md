@@ -51,15 +51,12 @@ GitHub Pages 會在 push 後自動重新部署，約 30 秒生效。
 | Cloudflare Pages | 未完成 | 需 Cloudflare API Token |
 | serveo.net | ✅ 手機可存取 | 作為備用方案，URL 會變動 |
 
-## 備用方案：serveo.net 隧道
+## 廢棄的本地開發方案
 
-本機執行 `node httpd.js`（埠 9001），再開 serveo 隧道：
-
-```bash
-ssh -R 80:localhost:9001 serveo.net
-```
-
-手機用終端顯示的 URL 開啟。隧道斷線後重連 URL 會變。
+以下檔案已於 2026-06-10 刪除（GitHub Pages + deploy.sh 完全取代）：
+- `serve.js` — localtunnel 隧道伺服器
+- `httpd.js` — 本地 HTTP 伺服器
+- `perfect.html` — 早期原型
 
 ## 技術架構
 

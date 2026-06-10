@@ -234,3 +234,8 @@ SVG 要求：Inkscape 導出的 SVG，每個零件的 `<g>` 要有 `inkscape:lab
 ### 產品爆炸圖/BOM 與儲存關係
 
 產品爆炸圖（SVG）和 BOM（CSV）存放於 **GitHub Pages**（1GB 免費），與 Cloudflare KV 分析儲存**完全獨立**。增加產品數量不影響 KV 的 1,000 筆事件上限。一個 SVG 約 50KB～2MB，500 個產品才逼近 1GB。分析事件僅記錄 pageview、詢價等輕量資訊，每筆約 500 字元。
+
+### 代碼清理（同日）
+- [x] 修正 `viewer.js` 中的 `DEFAULT_HASH`（原 `9f1c5b6...` 假值 → 正確的 `6d23d68...`）
+- [x] 刪除廢棄檔案：`perfect.html`（早期原型）、`httpd.js`（與 serve.js 重複）、`serve.js`（已被 GitHub Pages 取代）、`serve.log`
+- [x] 建立 `package.json`（正規化專案）
