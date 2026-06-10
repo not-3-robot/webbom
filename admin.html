@@ -177,8 +177,8 @@
 // 預設密碼 'webom2024' 的 SHA-256 hash
 // 請在部署時更換為自訂密碼的 hash：
 //   echo -n '你的密碼' | shasum -a 256
-const ADMIN_PASSWORD_HASH = '';
-const DEFAULT_HASH = '9f1c5b6b2c3c8e5a8b7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6';
+const ADMIN_PASSWORD_HASH = '6d23d6842954d957582968838f89ae5302f8628f6dc861b3187d18d92d997b87';
+const DEFAULT_HASH = '6d23d6842954d957582968838f89ae5302f8628f6dc861b3187d18d92d997b87';
 
 async function hashPassword(password) {
     if (window.crypto && window.crypto.subtle) {
