@@ -11,7 +11,7 @@
  *   - 鍵盤導航（↑↓ Enter）
  *   - SVG 縮放控制
  *   - 撤銷支援
- *   - 暗色模式
+
  */
 
 (function () {
@@ -971,37 +971,8 @@
     }
   }
 
-  // ========================================================================
-  // 14. 暗色模式
-  // ========================================================================
-  function initDarkMode() {
-    // 檢查 localStorage 偏好
-    var savedMode = localStorage.getItem('webBom_darkMode');
-    if (savedMode === '1') {
-      document.body.classList.add('dark-mode-enabled');
-    } else if (savedMode === null) {
-      // 首次造訪，跟隨系統偏好
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.body.classList.add('dark-mode-enabled');
-      }
-    }
 
-    // 監聽系統主題變化
-    if (window.matchMedia) {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-        var saved = localStorage.getItem('webBom_darkMode');
-        if (saved === null) {
-          document.body.classList.toggle('dark-mode-enabled', e.matches);
-        }
-      });
-    }
-  }
 
-  window.toggleDarkMode = function() {
-    var isDark = document.body.classList.toggle('dark-mode-enabled');
-    localStorage.setItem('webBom_darkMode', isDark ? '1' : '0');
-    showToast(isDark ? '🌙 暗色模式' : '☀️ 亮色模式');
-  };
 
   // ========================================================================
   // 15. 鍵盤快速鍵
@@ -1039,12 +1010,7 @@
         return;
       }
 
-      // D = 切換暗色模式 (Ctrl+Shift+D)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
-        e.preventDefault();
-        window.toggleDarkMode();
-        return;
-      }
+
     });
   }
 
@@ -1052,7 +1018,7 @@
   // 16. 啟動
   // ========================================================================
   function init() {
-    initDarkMode();
+
     initKeyboardShortcuts();
     loadProduct();
   }
